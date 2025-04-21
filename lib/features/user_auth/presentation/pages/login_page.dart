@@ -1,10 +1,10 @@
 // import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_flutter/features/user_auth/firebase_auth_impl/firebase_auth_service.dart';
-import 'package:firebase_flutter/features/user_auth/presentation/widgets/form_container_widget.dart';
+import 'package:laptop_harbor/features/user_auth/firebase_auth_impl/firebase_auth_service.dart';
+import 'package:laptop_harbor/features/user_auth/presentation/widgets/form_container_widget.dart';
+import 'package:laptop_harbor/features/user_auth/presentation/mainNavigationShell.dart';
 import 'package:flutter/material.dart';
 
-import 'home_page.dart';
 import 'register_page.dart';
 
 
@@ -16,11 +16,9 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-
-
 class _LoginPageState extends State<LoginPage> {
 
-  bool _isSigning = false;
+  final bool _isSigning = false;
 
   final FirebaseAuthService _auth = FirebaseAuthService();
 
@@ -40,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.red,
-        title: const Text("shopArsenal",
+        title: const Text("Laptop Harbour",
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w400)),
       ),
       body: Center(
@@ -129,12 +127,15 @@ class _LoginPageState extends State<LoginPage> {
     User? user = await _auth.signInWithEmailAndPassword(email, password);
 
     if(user != null) {
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const Homepage()), (route) => false);
+      Navigator.pushAndRemoveUntil(
+  context,
+  MaterialPageRoute(builder: (context) => const MainNavigationPage()),
+  (route) => false,
+);
       print("Login success");
 
     } else {
       print("error occur");
     }
-
   }
 }

@@ -27,7 +27,7 @@ class _StartScreenState extends State<StartScreen> {
     return const Scaffold(
       body: Center(
           child: Text(
-        "North London Forever",
+        "LAPTOP HARBOUR",
         style: TextStyle(color: Colors.red, fontWeight: FontWeight.w900, fontSize: 40.0),
       )
       ),

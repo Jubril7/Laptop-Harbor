@@ -1,12 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_flutter/features/user_auth/firebase_auth_impl/firebase_auth_service.dart';
-import 'package:firebase_flutter/features/user_auth/presentation/pages/home_page.dart';
-import 'package:firebase_flutter/features/user_auth/presentation/pages/login_page.dart';
-import 'package:firebase_flutter/features/user_auth/presentation/widgets/form_container_widget.dart';
+import 'package:laptop_harbor/features/user_auth/firebase_auth_impl/firebase_auth_service.dart';
+import 'package:laptop_harbor/features/user_auth/presentation/pages/home_page.dart';
+import 'package:laptop_harbor/features/user_auth/presentation/pages/login_page.dart';
+import 'package:laptop_harbor/features/user_auth/presentation/widgets/form_container_widget.dart';
 import 'package:flutter/material.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({Key? key}) : super(key: key);
+  const RegisterPage({super.key});
 
 
 
@@ -17,7 +17,7 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
 
-  bool _isSigning = false;
+  // final bool _isSigning = false;
 
 final FirebaseAuthService _auth = FirebaseAuthService();
 
@@ -39,7 +39,7 @@ final FirebaseAuthService _auth = FirebaseAuthService();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.red,
-        title: const Text("shopArsenal",
+        title: const Text("Laptop Harbour",
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w400)),
       ),
       body: Center(
@@ -125,23 +125,48 @@ final FirebaseAuthService _auth = FirebaseAuthService();
     );
   }
 
-  void _signUp() async {
+void _signUp() async {
+  String username = _usernameController.text.trim();
+  String email = _emailController.text.trim();
+  String password = _passwordController.text.trim();
 
-    
-    String username = _usernameController.text;
-    String email = _emailController.text;
-    String password = _passwordController.text;
+  if (username.isEmpty || email.isEmpty || password.isEmpty) {
+    _showErrorDialog("Please fill in all fields.");
+    return;
+  }
 
-
+  try {
     User? user = await _auth.signUpWithEmailAndPassword(email, password);
 
-    if(user != null) {
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const Homepage()), (route) => false);
+    if (user != null) {
       print("Sign up success");
-
-    } else {
-      print("error occur");
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const Homepage()),
+        (route) => false,
+      );
     }
-
+  } on FirebaseAuthException catch (e) {
+    _showErrorDialog(e.message ?? "Registration failed.");
+  } catch (e) {
+    _showErrorDialog("An unknown error occurred.");
   }
+}
+void _showErrorDialog(String message) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text("Error"),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text("OK"),
+        ),
+      ],
+    ),
+  );
+}
+
+
 }

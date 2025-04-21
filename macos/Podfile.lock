@@ -1,10 +1,10 @@
 PODS:
-  - Firebase/CoreOnly (10.20.0):
-    - FirebaseCore (= 10.20.0)
+  - Firebase/CoreOnly (11.10.0):
+    - FirebaseCore (= 11.10.0)
   - firebase_core (2.25.4):
-    - Firebase/CoreOnly (~> 10.20.0)
+    - Firebase/CoreOnly (~> 11.10.0)
     - FlutterMacOS
-  - FirebaseCore (10.20.0):
+  - FirebaseCore (11.10.0):
     - FirebaseCoreInternal (~> 10.0)
     - GoogleUtilities/Environment (~> 7.12)
     - GoogleUtilities/Logger (~> 7.12)
