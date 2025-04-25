@@ -1,13 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:js_interop';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart';
-
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laptop_harbor/features/user_auth/presentation/pages/wishListPage.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -24,6 +22,9 @@ class _ProfilePageState extends State<ProfilePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   File? _selectedImage;
 
+  final _subjectController = TextEditingController();
+  final _messageController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -39,77 +40,75 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-Future<void> _pickImage() async {
-  // For Web and mobile support, use file_picker instead of image_picker
-  final result = await FilePicker.platform.pickFiles(type: FileType.image);
+  Future<void> _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
 
-  if (result != null) {
-    final file = result.files.single;
-    final imagePath = file.path;
+    if (result != null) {
+      final file = result.files.single;
+      final imagePath = file.path;
 
-    setState(() {
-      _selectedImage = File(imagePath!); // Save the selected image
-    });
+      setState(() {
+        _selectedImage = File(imagePath!);
+      });
 
-    final imageUrl = await _uploadImageToCloudinary(context);
-    if (imageUrl != null) {
-      await user?.updatePhotoURL(imageUrl);
-      setState(() {}); // refresh the UI
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Profile picture updated")),
-      );
+      final imageUrl = await _uploadImageToCloudinary(context);
+      if (imageUrl != null) {
+        await user?.updatePhotoURL(imageUrl);
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Profile picture updated")),
+        );
+      }
     }
   }
-}
 
-Future<String?> _uploadImageToCloudinary(BuildContext context) async {
-  const cloudName = 'dt2dokj4b';
-  const uploadPreset = 'laptop-harbor-preset';
+  Future<String?> _uploadImageToCloudinary(BuildContext context) async {
+    const cloudName = 'dt2dokj4b';
+    const uploadPreset = 'laptop-harbor-preset';
 
-  final result = await FilePicker.platform.pickFiles(
-    type: FileType.image,
-    allowMultiple: false,
-    withData: true, // Needed to access bytes
-  );
-
-  if (result == null || result.files.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("No image selected")),
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: true,
     );
-    return null;
+
+    if (result == null || result.files.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No image selected")),
+      );
+      return null;
+    }
+
+    final file = result.files.first;
+    final fileBytes = file.bytes;
+    final fileName = file.name;
+
+    if (fileBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to read image bytes")),
+      );
+      return null;
+    }
+
+    final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
+
+    final request = http.MultipartRequest('POST', url)
+      ..fields['upload_preset'] = uploadPreset
+      ..files.add(http.MultipartFile.fromBytes('file', fileBytes, filename: fileName));
+
+    final response = await request.send();
+    final responseData = await http.Response.fromStream(response);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(responseData.body);
+      return data['secure_url'];
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to upload image to Cloudinary")),
+      );
+      return null;
+    }
   }
-
-  final file = result.files.first;
-  final fileBytes = file.bytes;
-  final fileName = file.name;
-
-  if (fileBytes == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Failed to read image bytes")),
-    );
-    return null;
-  }
-
-  final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
-
-  final request = http.MultipartRequest('POST', url)
-    ..fields['upload_preset'] = uploadPreset
-    ..files.add(http.MultipartFile.fromBytes('file', fileBytes, filename: fileName));
-
-  final response = await request.send();
-  final responseData = await http.Response.fromStream(response);
-
-  if (response.statusCode == 200) {
-    final data = jsonDecode(responseData.body);
-    return data['secure_url'];
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Failed to upload image to Cloudinary")),
-    );
-    return null;
-  }
-}
-
 
   Future<void> _updateProfile() async {
     if (_nameController.text.isNotEmpty) {
@@ -149,11 +148,45 @@ Future<String?> _uploadImageToCloudinary(BuildContext context) async {
     }
   }
 
+  Future<void> _submitFeedback() async {
+    final subject = _subjectController.text.trim();
+    final message = _messageController.text.trim();
+
+    if (subject.isEmpty || message.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in both subject and message')),
+      );
+      return;
+    }
+
+    // Here you would submit the feedback to your backend, email service, or Firebase.
+    // For this example, we will show a modal instead.
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Feedback Submitted'),
+        content: const Text('Thank you for your feedback! We will review it soon.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+
+    _subjectController.clear();
+    _messageController.clear();
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
     _fullNameController.dispose();
     _passwordController.dispose();
+    _subjectController.dispose();
+    _messageController.dispose();
     super.dispose();
   }
 
@@ -162,14 +195,6 @@ Future<String?> _uploadImageToCloudinary(BuildContext context) async {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Your Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.favorite),
-            onPressed: () {
-              Navigator.pushNamed(context, '/wishlist');
-            },
-          )
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -195,7 +220,6 @@ Future<String?> _uploadImageToCloudinary(BuildContext context) async {
                   ),
                   const SizedBox(height: 20),
 
-                  // Username
                   TextField(
                     controller: _nameController,
                     decoration: const InputDecoration(
@@ -205,7 +229,6 @@ Future<String?> _uploadImageToCloudinary(BuildContext context) async {
                   ),
                   const SizedBox(height: 10),
 
-                  // Full Name
                   TextField(
                     controller: _fullNameController,
                     decoration: const InputDecoration(
@@ -215,7 +238,6 @@ Future<String?> _uploadImageToCloudinary(BuildContext context) async {
                   ),
                   const SizedBox(height: 10),
 
-                  // Email (readonly)
                   Text(
                     user?.email ?? 'No email',
                     style: const TextStyle(fontSize: 16, color: Colors.grey),
@@ -227,7 +249,19 @@ Future<String?> _uploadImageToCloudinary(BuildContext context) async {
                     icon: const Icon(Icons.save),
                     label: const Text("Save Changes"),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 20),
+
+                  // 💜 Wishlist Button
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const WishlistPage()),
+                      );
+                    },
+                    icon: const Icon(Icons.favorite),
+                    label: const Text("Go to Wishlist"),
+                  ),
+                  const SizedBox(height: 20),
 
                   TextField(
                     controller: _passwordController,
@@ -250,6 +284,40 @@ Future<String?> _uploadImageToCloudinary(BuildContext context) async {
                     },
                     icon: const Icon(Icons.logout),
                     label: const Text("Logout"),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Feedback Section
+                  const Text(
+                    'Contact Support / Provide Feedback',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Subject Field
+                  TextField(
+                    controller: _subjectController,
+                    decoration: const InputDecoration(
+                      labelText: 'Subject',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Message Field
+                  TextField(
+                    controller: _messageController,
+                    maxLines: 5,
+                    decoration: const InputDecoration(
+                      labelText: 'Message',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  ElevatedButton(
+                    onPressed: _submitFeedback,
+                    child: const Text('Submit Feedback'),
                   ),
                 ],
               ),

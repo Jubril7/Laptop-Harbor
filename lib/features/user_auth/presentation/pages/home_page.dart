@@ -25,6 +25,7 @@ class _HomepageState extends State<Homepage> {
 
   String selectedPriceFilter = 'All';
   String selectedSortOption = 'None';
+  String searchQuery = '';
 
   final ScrollController _scrollController = ScrollController();
 
@@ -78,6 +79,13 @@ class _HomepageState extends State<Homepage> {
       case 'Name: Z-A':
         filtered.sort((a, b) => b.name.compareTo(a.name));
         break;
+    }
+
+    // Search Filter
+    if (searchQuery.isNotEmpty) {
+      filtered = filtered
+          .where((laptop) => laptop.name.toLowerCase().contains(searchQuery.toLowerCase()))
+          .toList();
     }
 
     return filtered;
@@ -175,6 +183,23 @@ class _HomepageState extends State<Homepage> {
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: TextField(
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value;
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search by Laptop Name...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(8),
             child: Row(
@@ -300,7 +325,6 @@ class _HomepageState extends State<Homepage> {
                                   action: SnackBarAction(
                                     label: 'View Cart',
                                     onPressed: () {
-                                      // Navigate to cart
                                     },
                                   ),
                                 ),

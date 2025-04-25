@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:laptop_harbor/model/laptopModel.dart';
 import 'package:laptop_harbor/cartProvider.dart';
 import 'package:laptop_harbor/model/cartModel.dart';
+import 'package:laptop_harbor/wishListProvider.dart';
+import 'package:laptop_harbor/model/wishListModel.dart';
 
 class LaptopDetailsPage extends StatelessWidget {
   final LaptopModel laptop;
@@ -38,6 +40,7 @@ class LaptopDetailsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    final wishlistProvider = Provider.of<WishlistProvider>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -68,20 +71,46 @@ class LaptopDetailsPage extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               buildStarRating(laptop.rating),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  cartProvider.addToCart(CartModel(
-                    id: laptop.id,
-                    name: laptop.name,
-                    imageUrl: laptop.imageUrl,
-                    price: laptop.price,
-                  ));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${laptop.name} added to cart')),
-                  );
-                },  
-                child: const Text('Add to Cart'),
+              const SizedBox(height: 30),
+              
+              // Buttons side by side
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      cartProvider.addToCart(CartModel(
+                        id: laptop.id,
+                        name: laptop.name,
+                        imageUrl: laptop.imageUrl,
+                        price: laptop.price,
+                      ));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${laptop.name} added to cart')),
+                      );
+                    },
+                    icon: const Icon(Icons.shopping_cart),
+                    label: const Text('Add to Cart'),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      wishlistProvider.addToWishlist(WishlistModel(
+                        id: laptop.id,
+                        name: laptop.name,
+                        imageUrl: laptop.imageUrl,
+                        price: laptop.price,
+                      ));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${laptop.name} added to wishlist')),
+                      );
+                    },
+                    icon: const Icon(Icons.favorite_border),
+                    label: const Text('Add to Wishlist'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.pinkAccent,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
